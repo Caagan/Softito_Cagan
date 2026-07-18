@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import xgboost as xgb
 import matplotlib.pyplot as plt
 import warnings
@@ -13,23 +13,18 @@ print("=" * 70)
 print("  SINGLE CONTAINER XGBOOST — Tek Konteyner ML Deployment")
 print("=" * 70)
 
-print("\n[PROJE] XGBoost — Tek Konteyner Icinde Egitim ve Tahmin")
+print("\n[PROJE] XGBoost — Breast Cancer Tahmini")
 print("-" * 50)
 
-X, y = make_classification(
-    n_samples=2000, n_features=20, n_informative=12,
-    weights=[0.7, 0.3], random_state=42
-)
-
-feature_names = [f"ozellik_{i}" for i in range(20)]
-df = pd.DataFrame(X, columns=feature_names)
-df["hedef"] = y
+data = load_breast_cancer()
+df = pd.DataFrame(data.data, columns=data.feature_names)
+df["target"] = data.target
 
 print(f"    Veri boyutu: {df.shape}")
-print(f"    Sinif orani: {df['hedef'].value_counts().to_dict()}")
+print(f"    Siniflar: {dict(zip(['Malign','Benign'], np.bincount(data.target)))}")
 
-X = df.drop("hedef", axis=1)
-y = df["hedef"]
+X = df.drop("target", axis=1)
+y = df["target"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
 scaler = StandardScaler()
@@ -47,22 +42,21 @@ y_pred = model.predict(X_test_scaled)
 acc = accuracy_score(y_test, y_pred)
 print(f"\n    Test Dogruluk: {acc:.4f}")
 print(f"\n    Classification Report:")
-print(classification_report(y_test, y_pred, digits=4))
+print(classification_report(y_test, y_pred, digits=4, target_names=["Malign", "Benign"]))
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-fig.suptitle("Single Container XGBoost — Deployment Hazirlik", fontsize=14)
+fig.suptitle("Single Container XGBoost — Breast Cancer", fontsize=14)
 
-importances = pd.Series(model.feature_importances_, index=feature_names).sort_values(ascending=True)
+importances = pd.Series(model.feature_importances_, index=data.feature_names).sort_values(ascending=True)
 importances.tail(10).plot(kind="barh", ax=axes[0], color="#3B8BD4")
 axes[0].set_title("En Onemli 10 Ozellik")
 
-from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, y_pred)
 im = axes[1].imshow(cm, cmap="Blues")
 axes[1].set_xticks([0, 1])
 axes[1].set_yticks([0, 1])
-axes[1].set_xticklabels(["Negatif", "Pozitif"])
-axes[1].set_yticklabels(["Negatif", "Pozitif"])
+axes[1].set_xticklabels(["Malign", "Benign"])
+axes[1].set_yticklabels(["Malign", "Benign"])
 axes[1].set_title("Confusion Matrix")
 for i in range(2):
     for j in range(2):

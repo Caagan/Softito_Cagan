@@ -1,4 +1,4 @@
-import time
+﻿import time
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 import psycopg2
@@ -26,4 +26,4 @@ try:
     conn.commit()
     print("[BAŞARILI] Anomali sonuçları DB'ye yazıldı!"); cursor.close(); conn.close()
 except Exception as e:
-    print(f"DB Hatası: {e}") s
+    print(f"DB Hatası: {e}")
